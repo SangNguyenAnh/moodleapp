@@ -117,7 +117,7 @@ export class AddonBlockMyOverviewComponent extends CoreBlockBaseComponent implem
         this.coursesObserver = this.eventsProvider.on(CoreCoursesProvider.EVENT_MY_COURSES_UPDATED,
                 (data: CoreCoursesMyCoursesUpdatedEventData) => {
 
-            if (data.action == CoreCoursesProvider.ACTION_ENROL || data.action == CoreCoursesProvider.ACTION_STATE_CHANGED) {
+            if (this.shouldRefreshOnUpdatedEvent(data)) {
                 this.refreshCourseList();
             }
         }, this.sitesProvider.getCurrentSiteId());
@@ -350,6 +350,30 @@ export class AddonBlockMyOverviewComponent extends CoreBlockBaseComponent implem
         }
 
         await this.loadContent(true);
+    }
+
+    /**
+     * Whether list should be refreshed based on a EVENT_MY_COURSES_UPDATED event.
+     *
+     * @param data Event data.
+     * @return Whether to refresh.
+     */
+    protected shouldRefreshOnUpdatedEvent(data: CoreCoursesMyCoursesUpdatedEventData): boolean {
+        if (data.action == CoreCoursesProvider.ACTION_ENROL) {
+            // Always update if user enrolled in a course.
+            return true;
+        }
+
+        if (data.action == CoreCoursesProvider.ACTION_VIEW && data.courseId != this.sitesProvider.getCurrentSiteHomeId() &&
+                this.courses.allincludinghidden[0] && data.courseId != this.courses.allincludinghidden[0].id) {
+            return true;
+        }
+
+        if (data.action == CoreCoursesProvider.ACTION_STATE_CHANGED) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
